@@ -7,60 +7,96 @@
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
+            transition: background 0.5s ease;
         }
         .weather-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.9);
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             padding: 40px;
-            width: 300px;
+            width: 350px;
             text-align: center;
+            backdrop-filter: blur(10px);
         }
         .search-box {
             margin-bottom: 20px;
+            display: flex;
         }
         input {
-            padding: 10px 15px;
+            padding: 12px 20px;
             border: 2px solid #ddd;
             border-radius: 30px;
-            width: 70%;
+            width: 100%;
             font-size: 16px;
+            outline: none;
+            transition: border 0.3s;
+        }
+        input:focus {
+            border-color: #4a6bff;
         }
         button {
             background: #4a6bff;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 25px;
             border-radius: 30px;
             margin-left: 10px;
             cursor: pointer;
             transition: all 0.3s;
+            font-weight: 500;
         }
         button:hover {
             background: #3a56d4;
+            transform: translateY(-2px);
         }
         .weather-icon {
             width: 100px;
             height: 100px;
-            margin: 20px auto;
+            margin: 10px auto;
+            animation: fadeIn 0.5s ease;
         }
         .temp {
             font-size: 48px;
             font-weight: 700;
             margin: 10px 0;
+            animation: fadeIn 0.5s ease;
         }
         .description {
             color: #666;
             font-size: 20px;
+            animation: fadeIn 0.5s ease;
         }
         .error {
             color: #ff4757;
             margin-top: 20px;
+            animation: shake 0.5s;
+        }
+        .loading {
+            margin: 20px auto;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4a6bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -69,26 +105,61 @@
         <h1>Weather App</h1>
         
         <div class="search-box">
-            <form action="/weather" method="GET">
+            <form id="weather-form">
                 <input type="text" name="city" placeholder="Enter city name" required>
                 <button type="submit">Search</button>
             </form>
         </div>
 
-        {% if weather %}
-        <div class="weather-info">
-            <h2>{{ weather.city }}</h2>
-            {% if weather.icon %}
-            <img class="weather-icon" src="http://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="Weather icon">
+        <div id="weather-results">
+            {% if weather %}
+            <div class="weather-info">
+                <h2>{{ weather.city }}</h2>
+                {% if weather.icon %}
+                <img class="weather-icon" src="http://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="Weather icon">
+                {% endif %}
+                <div class="temp">{{ weather.temp }}°C</div>
+                <div class="description">{{ weather.description }}</div>
+            </div>
             {% endif %}
-            <div class="temp">{{ weather.temp }}°C</div>
-            <div class="description">{{ weather.description }}</div>
-        </div>
-        {% endif %}
 
-        {% if error %}
-        <div class="error">{{ error }}</div>
-        {% endif %}
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+        </div>
     </div>
+
+    <script>
+        const form = document.getElementById('weather-form');
+        const resultsDiv = document.getElementById('weather-results');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const city = encodeURIComponent(form.city.value.trim());
+            
+            // Show loading spinner
+            resultsDiv.innerHTML = '<div class="loading"></div>';
+            
+            try {
+                const response = await fetch(`/weather?city=${city}`);
+                const html = await response.text();
+                resultsDiv.innerHTML = html;
+                
+                // Change background based on weather
+                const temp = document.querySelector('.temp')?.textContent;
+                if (temp) {
+                    const tempValue = parseInt(temp);
+                    document.body.style.background = tempValue > 25 
+                        ? 'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)' 
+                        : tempValue < 10 
+                            ? 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)'
+                            : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)';
+                }
+            } catch (err) {
+                resultsDiv.innerHTML = `<div class="error">Network error - please try again</div>`;
+                console.error('Fetch error:', err);
+            }
+        });
+    </script>
 </body>
 </html>

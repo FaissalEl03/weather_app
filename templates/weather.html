@@ -137,27 +137,44 @@
             e.preventDefault();
             const city = encodeURIComponent(form.city.value.trim());
             
+            if (!city) {
+                resultsDiv.innerHTML = '<div class="error">Please enter a city name</div>';
+                return;
+            }
+            
             // Show loading spinner
             resultsDiv.innerHTML = '<div class="loading"></div>';
+            console.log(`Fetching weather for: ${city}`); // Debug log
             
             try {
                 const response = await fetch(`/weather?city=${city}`);
+                
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.message || `HTTP error! status: ${response.status}`);
+                }
+                
                 const html = await response.text();
                 resultsDiv.innerHTML = html;
+                console.log('Weather data loaded successfully'); // Debug log
                 
                 // Change background based on weather
-                const temp = document.querySelector('.temp')?.textContent;
-                if (temp) {
-                    const tempValue = parseInt(temp);
-                    document.body.style.background = tempValue > 25 
-                        ? 'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)' 
-                        : tempValue < 10 
-                            ? 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)'
-                            : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)';
+                const tempElement = document.querySelector('.temp');
+                if (tempElement) {
+                    const tempValue = parseInt(tempElement.textContent);
+                    document.body.style.background = 
+                        tempValue > 25 ? 'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)' :
+                        tempValue < 10 ? 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)' :
+                        'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)';
                 }
             } catch (err) {
-                resultsDiv.innerHTML = `<div class="error">Network error - please try again</div>`;
-                console.error('Fetch error:', err);
+                console.error('Fetch error:', err); // Debug log
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        ${err.message.includes('Failed to fetch') ? 
+                          'Network error - please check connection' : 
+                          err.message}
+                    </div>`;
             }
         });
     </script>

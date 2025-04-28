@@ -1,21 +1,27 @@
-name: Run Tests
-on: [push]  # Triggers on every git push
+name: Test Guardrail
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4  # Checks out your code
-
+      - uses: actions/checkout@v4
+      
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.9"
-
+          
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pytest  # Only needed if pytest isn't in requirements.txt
-
+          pip install pytest
+          
       - name: Run tests
-        run: pytest -v  # Runs your tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest -v

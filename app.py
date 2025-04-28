@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-API_KEY = os.getenv('OPENWEATHER_API_KEY')
+API_KEY = "b703854d4471c3da2906c2d7cc8d5f71"
 
 @app.route('/')
 def home():
